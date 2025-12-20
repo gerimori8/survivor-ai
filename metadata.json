@@ -1,0 +1,9 @@
+{
+  "name": "Survivor AI - Legacy Edition",
+  "description": "Sophisticated tactical survival tool featuring bio-analysis, hyper-precise weather tracking, and secure communication channels.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}

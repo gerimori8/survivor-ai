@@ -1,0 +1,93 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="https://fonts.gstatic.com/s/i/materialicons/verified_user/v16/24px.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#FAF9F6" />
+    <title>Survivor AI - Edición Legado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Courier+Prime:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              om: {
+                navy: '#1A202C', // Darker, softer navy from image
+                gold: '#C5A059',
+                cream: '#FAF9F6', // Reference image background
+                paper: '#FFFFFF', // Card background
+                alert: '#9B2C2C', // Dark red from image
+                subtle: '#718096',
+              }
+            },
+            fontFamily: {
+              mono: ['Courier Prime', 'Courier New', 'monospace'],
+              serif: ['Playfair Display', 'serif'],
+              sans: ['Inter', 'Helvetica Neue', 'Arial', 'sans-serif'],
+            },
+            animation: {
+              'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'scanline': 'scanline 8s linear infinite',
+              'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
+            },
+            backgroundImage: {
+              'grid-pattern': "linear-gradient(to right, #333 1px, transparent 1px), linear-gradient(to bottom, #333 1px, transparent 1px)",
+            },
+            keyframes: {
+              scanline: {
+                '0%': { transform: 'translateY(-100%)' },
+                '100%': { transform: 'translateY(100%)' }
+              },
+              fadeInUp: {
+                '0%': { opacity: '0', transform: 'translateY(10px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' }
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar { width: 0px; background: transparent; }
+      
+      .scanlines {
+        background: linear-gradient(
+          to bottom,
+          rgba(0,0,0,0),
+          rgba(0,0,0,0) 50%,
+          rgba(0,0,0,0.02) 50%,
+          rgba(0,0,0,0.02)
+        );
+        background-size: 100% 3px;
+        pointer-events: none;
+      }
+      .grid-bg {
+        background-size: 40px 40px;
+        background-image: 
+          linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "framer-motion": "https://esm.sh/framer-motion@^12.23.26",
+    "@google/genai": "https://esm.sh/@google/genai@^1.33.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-om-cream text-om-navy overflow-hidden h-screen w-screen selection:bg-om-gold selection:text-white transition-colors duration-700">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
