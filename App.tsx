@@ -4,10 +4,11 @@ import { LocationModule } from './components/LocationModule';
 import { AppModule, LocationIntel } from './types';
 import { getLocationIntel } from './services/geminiService';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import { useFirestoreInventory } from './hooks/useFirestoreInventory'; // Nuevo Hook
+import { useFirestoreInventory } from './hooks/useFirestoreInventory';
 import { auth } from './services/firebase';
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { AuthScreen } from './components/AuthScreen';
+import { TutorialOverlay } from './components/TutorialOverlay'; // Importar Tutorial
 
 const ScannerModule = React.lazy(() => import('./components/ScannerModule').then(m => ({ default: m.ScannerModule })));
 const LiveSessionModule = React.lazy(() => import('./components/LiveSessionModule').then(m => ({ default: m.LiveSessionModule })));
@@ -34,10 +35,11 @@ export default function App() {
   const [currentModule, setCurrentModule] = useState<AppModule>(AppModule.LOCATION);
   const [lowPowerMode, setLowPowerMode] = useState(false);
   
-  // Usar Firestore para el inventario en lugar de solo LocalStorage
+  // Estado para el tutorial (persistente en localStorage)
+  const [tutorialCompleted, setTutorialCompleted] = useLocalStorage<boolean>('survivor_tutorial_v1_done', false);
+  
   const [inventory, setInventory] = useFirestoreInventory(user);
   
-  // LocalStorage se mantiene para datos no críticos como la última ubicación vista
   const [locationData, setLocationData] = useLocalStorage<LocationIntel | null>('last_site_data', null);
   const [locationLoading, setLocationLoading] = useState(false);
 
@@ -70,15 +72,24 @@ export default function App() {
 
   return (
     <div className={`flex flex-col h-screen transition-colors duration-500 ${lowPowerMode ? 'bg-black' : 'bg-om-cream'}`}>
+      
+      {/* TUTORIAL OVERLAY */}
+      {!tutorialCompleted && (
+          <TutorialOverlay 
+              onComplete={() => setTutorialCompleted(true)} 
+              onModuleChange={(mod) => setCurrentModule(mod)}
+          />
+      )}
+
       <header className="h-20 flex items-center justify-between px-6 shrink-0 z-20">
-         <div>
+         <div id="header-status">
              <h1 className="font-serif text-2xl font-bold leading-none">Survivor<span className="text-om-gold">AI</span></h1>
              <p className="font-mono text-[8px] uppercase tracking-widest opacity-50 mt-1 flex items-center gap-1">
                  <span className={`w-2 h-2 rounded-full ${navigator.onLine ? 'bg-green-500' : 'bg-red-500'}`}></span>
                  {user.isAnonymous ? `FANTASMA: ${user.uid.slice(0,5)}...` : user.email?.split('@')[0]}
              </p>
          </div>
-         <div className="flex gap-3">
+         <div className="flex gap-3" id="header-actions">
              <button onClick={handleLogout} className="p-2 text-xs font-mono border border-red-500/30 text-red-500 rounded hover:bg-red-500 hover:text-white transition-colors uppercase">
                  Salir
              </button>
@@ -103,9 +114,14 @@ export default function App() {
         </Suspense>
       </main>
 
-      <nav className="h-24 pb-8 flex items-center justify-around shrink-0 bg-white border-t border-gray-100 px-2">
+      <nav className="h-24 pb-8 flex items-center justify-around shrink-0 bg-white border-t border-gray-100 px-2 relative z-10">
           {navItems.map(item => (
-              <button key={item.id} onClick={() => setCurrentModule(item.id)} className={`flex flex-col items-center gap-1 flex-1 ${currentModule === item.id ? 'text-om-navy' : 'text-gray-400'}`}>
+              <button 
+                  key={item.id} 
+                  id={`nav-${item.id}`} // ID añadido para el tutorial
+                  onClick={() => setCurrentModule(item.id)} 
+                  className={`flex flex-col items-center gap-1 flex-1 ${currentModule === item.id ? 'text-om-navy' : 'text-gray-400'}`}
+              >
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">{item.icon}</svg>
                   <span className="text-[9px] font-bold uppercase tracking-widest">{item.label}</span>
               </button>
