@@ -13,7 +13,7 @@ interface Props {
 
 export const CommandCenterModule: React.FC<Props> = ({ inventoryItems, setInventory, isLowBattery }) => {
   const [messages, setMessages] = useLocalStorage<ChatMessage[]>('survivor_chat_history', [
-      { id: '0', sender: 'ai', text: 'Sistema de asistencia activo. Describe tu situación o emergencia.', timestamp: Date.now() }
+      { id: '0', sender: 'ai', text: 'Canal de comunicación operativo. Soy el operador Fenrir. Indique su situación actual o requerimiento técnico.', timestamp: Date.now() }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -36,8 +36,8 @@ export const CommandCenterModule: React.FC<Props> = ({ inventoryItems, setInvent
               const timeDiff = (now - lastPosRef.current.time) / 1000; 
               const speedMps = dist / timeDiff;
               
-              if (speedMps > 1.5) activityRef.current = "Moviéndose Rápido / Corriendo";
-              else if (speedMps > 0.3) activityRef.current = "Caminando";
+              if (speedMps > 1.5) activityRef.current = "Movimiento rápido";
+              else if (speedMps > 0.3) activityRef.current = "Marcha";
               else activityRef.current = "Estacionario";
           }
           lastPosRef.current = { lat: pos.coords.latitude, lng: pos.coords.longitude, time: now };
@@ -61,12 +61,12 @@ export const CommandCenterModule: React.FC<Props> = ({ inventoryItems, setInvent
 
   const getContext = (): SurvivalContext => {
       const hour = new Date().getHours();
-      const timeStr = hour < 6 ? "Noche (Madrugada)" : hour < 12 ? "Mañana" : hour < 18 ? "Tarde" : "Noche";
+      const timeStr = hour < 6 ? "Madrugada" : hour < 12 ? "Mañana" : hour < 18 ? "Tarde" : "Noche";
       
       return {
           timeOfDay: timeStr,
           activityStatus: activityRef.current,
-          lastKnownLocation: lastPosRef.current ? `${lastPosRef.current.lat.toFixed(4)}, ${lastPosRef.current.lng.toFixed(4)}` : "Desconocida"
+          lastKnownLocation: lastPosRef.current ? `${lastPosRef.current.lat.toFixed(4)}, ${lastPosRef.current.lng.toFixed(4)}` : "Ubicación desconocida"
       };
   };
 
@@ -109,7 +109,7 @@ export const CommandCenterModule: React.FC<Props> = ({ inventoryItems, setInvent
       if (!navigator.onLine) {
           setTimeout(() => {
               const offlineReply = getOfflineResponse(userMsg.text);
-              const replyText = offlineReply || "MODO OFFLINE: Conexión perdida. Consulta el manual médico si es una emergencia.";
+              const replyText = offlineReply || "CONEXIÓN OFFLINE: Se recomienda consultar los protocolos médicos locales hasta restablecer señal.";
               
               const aiMsg: ChatMessage = { id: (Date.now()+1).toString(), sender: 'ai', text: replyText, timestamp: Date.now() };
               setMessages(prev => [...prev, aiMsg]);
@@ -127,16 +127,16 @@ export const CommandCenterModule: React.FC<Props> = ({ inventoryItems, setInvent
           const responseText = await sendChatMessage(
               history, 
               userMsg.text, 
-              invString || "INVENTARIO VACÍO (Sin equipos)",
+              invString || "Inventario vacío",
               getContext(),
               handleInventoryTool
           );
           
-          const aiMsg: ChatMessage = { id: (Date.now()+1).toString(), sender: 'ai', text: responseText || "Recibido.", timestamp: Date.now() };
+          const aiMsg: ChatMessage = { id: (Date.now()+1).toString(), sender: 'ai', text: responseText || "Mensaje recibido y procesado.", timestamp: Date.now() };
           
           setMessages(prev => [...prev, aiMsg]);
       } catch (e) {
-          setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: "Error de conexión. Intente nuevamente.", timestamp: Date.now() }]);
+          setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: "Error en la transmisión. Intente de nuevo.", timestamp: Date.now() }]);
       } finally {
           setLoading(false);
       }
@@ -158,7 +158,7 @@ export const CommandCenterModule: React.FC<Props> = ({ inventoryItems, setInvent
                       </div>
                   </div>
               ))}
-              {loading && <div className="text-xs font-mono text-om-gold animate-pulse pl-4">PROCESANDO CONSULTA...</div>}
+              {loading && <div className="text-xs font-mono text-om-gold animate-pulse pl-4 uppercase tracking-widest">Transmitiendo consulta...</div>}
           </div>
 
           <div className={`p-4 border-t pb-safe mb-20 ${isLowBattery ? 'bg-black border-gray-800' : 'bg-om-cream border-om-gold/20'} flex gap-2 fixed bottom-0 left-0 right-0 z-10`}>
@@ -167,7 +167,7 @@ export const CommandCenterModule: React.FC<Props> = ({ inventoryItems, setInvent
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleSend()}
-                  placeholder="TRANSMITIR MENSAJE..."
+                  placeholder="ENVIAR COMUNICACIÓN..."
                   className={`flex-1 p-3 font-mono text-sm outline-none border rounded-sm ${
                       isLowBattery 
                       ? 'bg-gray-900 border-gray-700 text-gray-300' 

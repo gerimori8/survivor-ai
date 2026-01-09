@@ -1,15 +1,17 @@
 
 import React, { useState } from 'react';
 import { InventoryItem } from '../types';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { SyncStatus } from '../hooks/useFirestoreInventory';
 
 interface Props {
     items: InventoryItem[];
     onUpdate: (items: InventoryItem[]) => void;
     isLowBattery: boolean;
+    syncStatus?: SyncStatus;
 }
 
-export const InventoryModule: React.FC<Props> = ({ items, onUpdate, isLowBattery }) => {
+export const InventoryModule: React.FC<Props> = ({ items, onUpdate, isLowBattery, syncStatus = 'LOCAL_ONLY' }) => {
     const [newItemName, setNewItemName] = useState('');
 
     const addItem = () => {
@@ -39,7 +41,7 @@ export const InventoryModule: React.FC<Props> = ({ items, onUpdate, isLowBattery
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = "survivor_intel_export.json";
+        link.download = "inventario_activos.json";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -47,64 +49,82 @@ export const InventoryModule: React.FC<Props> = ({ items, onUpdate, isLowBattery
 
     const transitionConfig = isLowBattery ? { duration: 0 } : { duration: 0.3 };
 
+    const getStatusIcon = () => {
+        switch (syncStatus) {
+            case 'SYNCED': 
+                return <span className="text-green-500 flex items-center gap-1">● NUBE</span>;
+            case 'SYNCING': 
+                return <span className="text-yellow-500 flex items-center gap-1">◌ SYNC</span>;
+            case 'ERROR': 
+                return <span className="text-red-500 flex items-center gap-1">× ERROR</span>;
+            case 'LOCAL_ONLY': 
+            default:
+                return <span className="text-gray-400 flex items-center gap-1">○ LOCAL</span>;
+        }
+    };
+
     return (
-        <div className={`h-full flex flex-col p-6 overflow-y-auto pb-24 ${isLowBattery ? 'bg-black text-gray-500' : 'bg-om-cream text-om-navy'}`}>
-            <div className="flex justify-between items-center mb-2 border-b border-om-gold pb-2">
-                <h2 className="font-serif text-2xl tracking-wide">Inventario Táctico</h2>
-                <button onClick={handleExport} className="text-[10px] font-mono border border-current px-2 py-1 hover:bg-om-gold hover:text-white transition-colors uppercase" title="Exportar Datos">
-                    EXPORTAR
-                </button>
-            </div>
-            <p className="font-mono text-xs opacity-60 mb-6">LOGÍSTICA Y SUMINISTROS</p>
-
-            <div className="flex gap-2 mb-8">
-                <input 
-                    type="text" 
-                    value={newItemName}
-                    onChange={(e) => setNewItemName(e.target.value)}
-                    placeholder="AÑADIR EQUIPO..."
-                    className={`flex-1 p-3 font-mono text-sm outline-none border transition-colors ${
-                        isLowBattery 
-                        ? 'bg-gray-900 border-gray-700 text-gray-300' 
-                        : 'bg-white border-om-navy/20 text-om-navy focus:border-om-gold'
-                    }`}
-                />
-                <button 
-                    onClick={addItem}
-                    className={`px-6 font-bold font-mono text-sm tracking-wider ${
-                        isLowBattery ? 'bg-gray-800 text-gray-400' : 'bg-om-navy text-white hover:bg-om-gold transition-colors'
-                    }`}
-                >
-                    AÑADIR
+        <div className={`h-full flex flex-col p-6 overflow-y-auto pb-40 ${isLowBattery ? 'bg-black text-gray-300' : 'bg-om-cream text-om-navy'}`}>
+            <div className="flex justify-between items-end mb-8 border-b border-current pb-4">
+                <div>
+                    <h2 className="font-serif text-3xl font-bold">Mochila</h2>
+                    <div className="flex items-center gap-4 mt-1">
+                        <p className="font-mono text-[10px] uppercase tracking-widest opacity-60">
+                            Inventario Táctico
+                        </p>
+                        <div className="font-mono text-[9px] font-bold border border-current px-2 py-0.5 rounded-full uppercase">
+                            {getStatusIcon()}
+                        </div>
+                    </div>
+                </div>
+                <button onClick={handleExport} className="text-[10px] font-mono border border-current px-3 py-1 hover:bg-om-navy hover:text-white transition-colors uppercase">
+                    Exportar
                 </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 mb-8">
+                <AnimatePresence>
+                    {items.map(item => (
+                        <motion.div 
+                            key={item.id}
+                            layout
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={transitionConfig}
+                            className={`p-4 flex justify-between items-center rounded-lg border ${isLowBattery ? 'bg-gray-900 border-gray-700' : 'bg-white border-om-navy/5 shadow-sm'}`}
+                        >
+                            <span className="font-serif font-bold">{item.name}</span>
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => updateQuantity(item.id, -1)} className="w-8 h-8 flex items-center justify-center border border-current rounded hover:bg-red-500/10">-</button>
+                                <span className="font-mono w-6 text-center font-bold">{item.quantity}</span>
+                                <button onClick={() => updateQuantity(item.id, 1)} className="w-8 h-8 flex items-center justify-center border border-current rounded hover:bg-green-500/10">+</button>
+                            </div>
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+                
                 {items.length === 0 && (
-                    <div className="text-center font-mono text-xs opacity-40 py-10 border border-dashed border-current">
-                        SIN ACTIVOS REGISTRADOS
+                    <div className="text-center py-10 opacity-40 font-mono text-xs uppercase border-2 border-dashed border-current rounded-lg">
+                        Contenedor Vacío
                     </div>
                 )}
-                {items.map(item => (
-                    <motion.div 
-                        key={item.id}
-                        transition={transitionConfig}
-                        initial={{ opacity: 0, x: isLowBattery ? 0 : -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className={`flex justify-between items-center p-4 border-l-2 ${
-                            isLowBattery 
-                            ? 'bg-gray-900/50 border-gray-600' 
-                            : 'bg-white shadow-sm border-om-gold'
-                        }`}
-                    >
-                        <span className="font-sans font-semibold tracking-wide uppercase">{item.name}</span>
-                        <div className="flex items-center space-x-4">
-                            <button onClick={() => updateQuantity(item.id, -1)} className="hover:text-om-gold px-2">-</button>
-                            <span className="font-mono w-6 text-center">{item.quantity}</span>
-                            <button onClick={() => updateQuantity(item.id, 1)} className="hover:text-om-gold px-2">+</button>
-                        </div>
-                    </motion.div>
-                ))}
+            </div>
+
+            <div className={`p-4 rounded-xl border ${isLowBattery ? 'bg-gray-900 border-gray-700' : 'bg-om-paper border-om-gold'}`}>
+                <span className="font-mono text-[9px] font-bold uppercase tracking-widest block mb-2 opacity-60">Añadir Recurso</span>
+                <div className="flex gap-2">
+                    <input 
+                        value={newItemName}
+                        onChange={e => setNewItemName(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && addItem()}
+                        placeholder="Ej: Baterías AA, Agua 1L..."
+                        className={`flex-1 bg-transparent border-b border-current p-2 font-serif outline-none ${isLowBattery ? 'placeholder-gray-600' : 'placeholder-gray-400'}`}
+                    />
+                    <button onClick={addItem} className="bg-om-navy text-white px-4 rounded font-mono text-xs uppercase hover:bg-om-gold transition-colors">
+                        Añadir
+                    </button>
+                </div>
             </div>
         </div>
     );
